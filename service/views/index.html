@@ -1,0 +1,274 @@
+{% extends "./_map.html" %}
+
+{% block map_body %}
+<script>
+	var map = L.map('map').setView([{{ map_lat_center }}, {{ map_lon_center }}], 15);
+
+	L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+		maxZoom: 18,
+		minZoom: 2,
+		attribution: 'ILYA special for <a target="_blank" href="https://otus.ru/">OTUS</a> NoSQL Course',
+		id: 'mapbox/streets-v11',
+		tileSize: 512,
+		zoomOffset: -1
+	}).addTo(map);
+    function onLocationFound(e) {
+		var radius = e.accuracy / 2;
+
+		L.marker(e.latlng).addTo(map)
+			.bindPopup("You are within " + radius + " meters from this point").openPopup();
+
+		L.circle(e.latlng, radius).addTo(map);
+	}
+
+	function onLocationError(e) {
+		alert(e.message);
+	}
+
+	var ids_set = new Set();
+
+	var popup = L.popup();
+
+	function onMapClick(e) {
+		popup
+			.setLatLng(e.latlng)
+			.setContent("You clicked the map at " + e.latlng.toString())
+			.openOn(map);
+	}
+
+	map.on('locationfound', onLocationFound);
+	map.on('locationerror', onLocationError);
+
+	map.on('click', onMapClick);
+</script>
+
+<script>
+    function check_exists_dynamic(arr) {
+        for (collection_name in arr['dynamic']) {
+            for (geo_object_name in arr['dynamic'][collection_name]) {
+                for (geo_object_view in arr['dynamic'][collection_name][geo_object_name]) {
+                    for (ident in arr['dynamic'][collection_name][geo_object_name][geo_object_view]) {
+                        let o = arr['dynamic'][collection_name][geo_object_name][geo_object_view][ident];
+
+<!--                        console.log(geo_object_name + ' ' + geo_object_name + ' #' + ident + ' ' + o.was_found);-->
+                        if (o.was_found == false) {
+                            console.log('Dynamic object #' + ident + ' left current map area');
+                            o.removeFrom(map);
+                            arr['dynamic'][collection_name][geo_object_name][geo_object_view][ident].removeFrom(map);
+                            delete o;
+                            delete arr['dynamic'][collection_name][geo_object_name][geo_object_view][ident];
+                        } else {
+                            o.was_found = false;
+                            arr['dynamic'][collection_name][geo_object_name][geo_object_view][ident] = o;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    function add_object(add_to, geo_object_type, collection_name, geo_object_name, geo_object_view, ident, obj){
+        if (!(geo_object_type in add_to)) {
+            add_to[geo_object_type] = {};
+        }
+        if (!(collection_name in add_to[geo_object_type])) {
+            add_to[geo_object_type][collection_name] = {};
+        }
+        if (!(geo_object_name in add_to[geo_object_type][collection_name])) {
+            add_to[geo_object_type][collection_name][geo_object_name] = {};
+        }
+        if (!(geo_object_view in add_to[geo_object_type][collection_name][geo_object_name])) {
+            add_to[geo_object_type][collection_name][geo_object_name][geo_object_view] = {};
+        }
+
+        obj.was_found = true;
+        let is_new = true;
+        if (ident in add_to[geo_object_type][collection_name][geo_object_name][geo_object_view]) {
+            is_new = false;
+        }
+        if (geo_object_type === 'dynamic' && is_new == false) {
+            add_to[geo_object_type][collection_name][geo_object_name][geo_object_view][ident].was_found = true
+            if (geo_object_view === 'point') {
+                p = add_to[geo_object_type][collection_name][geo_object_name][geo_object_view][ident];
+                p.setLatLng([obj.getLatLng().lat, obj.getLatLng().lng]);
+                <!-- p = {...p, ...obj}; -->
+            }
+            if (geo_object_view === 'line_string') {
+                p = add_to[geo_object_type][collection_name][geo_object_name][geo_object_view][ident];
+                p.setLatLngs(obj.getLatLngs());
+            }
+            if (geo_object_view === 'polygon') {
+                p = add_to[geo_object_type][collection_name][geo_object_name][geo_object_view][ident];
+                p.setLatLngs(obj.getLatLngs());
+            }
+        }
+        if (is_new) {
+            add_to[geo_object_type][collection_name][geo_object_name][geo_object_view][ident] = obj;
+        }
+        return is_new;
+    }
+
+    let all_geo_objects = {};
+    var xhr;
+    var timer;
+    function get_data(geo_object_type, northEast, southWest){
+        if (map.zoom <= 14) {
+            return 0;
+        }
+        if (xhr && !(xhr.readyState === 4)) {
+            xhr.abort();
+            console.log('Previous AJAX #' + xhr.__timestamp_marker + ' was aborted');
+        }
+        clearTimeout(timer);
+        xhr = new XMLHttpRequest();
+        xhr.responseType = 'json';
+        xhr.__timestamp_marker = Date.now();
+        console.log('Start AJAX #' + xhr.__timestamp_marker);
+        timer = setTimeout(function() {
+            console.group('Run AJAX #' + xhr.__timestamp_marker);
+            console.log('northEast = ' + northEast);
+            console.log('southWest = ' + southWest);
+            console.log('zoom = ' + map._zoom);
+            console.groupEnd();
+
+            xhr.open("GET", '/get_data/?geo_object_type='+geo_object_type+'&north_east_lat='+northEast.lat+'&north_east_lon='+northEast.lng+'&south_west_lat='+southWest.lat+'&south_west_lon='+southWest.lng, true);
+            xhr.onload = function() {
+                var jsonResponse = xhr.response;
+                <!-- console.log(jsonResponse); -->
+                if (!(jsonResponse)){
+                    return 0;
+                }
+
+                for (let i = 0; i < jsonResponse.length ; i++) {
+                    let dataset = jsonResponse[i];
+
+                    let geo_object_type = dataset.geo_object_type;
+                    let collection_name = dataset.collection_name;
+                    let geo_object_name = dataset.geo_object_name;
+                    let geo_object_view = dataset.geo_object_view;
+                    let data = dataset.data;
+
+                    console.group('' + collection_name + '.' + geo_object_name);
+                    console.log('geo_object_type = ' + geo_object_type);
+                    console.log('geo_object_view = ' + geo_object_view);
+                    console.log('count was found = ' + data.length);
+                    console.groupEnd();
+
+                    if (geo_object_view == 'point') {
+                        for (let j = 0; j < data.length ; j++) {
+                            var geo_object = L.marker([ data[j][geo_object_name].coordinates[1],
+                                                        data[j][geo_object_name].coordinates[0] ]);
+                            if (geo_object_type === 'dynamic') {
+<!--                                console.log('Dynamic was find  #' + data[j].ident + ' ' + geo_object_name);-->
+                                geo_object.was_find = true;
+                            }
+                            let is_new = add_object(
+                                all_geo_objects,
+                                geo_object_type,
+                                collection_name,
+                                geo_object_name,
+                                geo_object_view,
+                                data[j].ident,
+                                geo_object
+                            )
+                            if (is_new) {
+                                let popup_title = '';
+                                for( var key in data[j] ) {
+                                    popup_title += "<b>"+key+"</b> " + JSON.stringify(data[j][key]) + "<br />";
+                                }
+                                geo_object.addTo(map).bindPopup(
+                                    popup_title
+                                );
+                            }
+                        }
+                    }
+
+                    if (geo_object_view == 'line_string') {
+                        for (let j = 0; j < data.length ; j++) {
+                            let coords = [];
+                            for (k = 0; k < data[j][geo_object_name].coordinates.length; k++) {
+                                coords.push([
+                                    data[j][geo_object_name].coordinates[k][1],
+                                    data[j][geo_object_name].coordinates[k][0]
+                                ]);
+                            }
+                            var geo_object = L.polyline(coords, {color: 'red'});
+                            if (geo_object_type === 'dynamic') {
+<!--                                console.log('Dynamic was find  #' + data[j].ident + ' ' + geo_object_name);-->
+                                geo_object.was_find = true;
+                            }
+                            let is_new = add_object(
+                                all_geo_objects,
+                                geo_object_type,
+                                collection_name,
+                                geo_object_name,
+                                geo_object_view,
+                                data[j].ident,
+                                geo_object
+                            );
+                            if (is_new) {
+                                geo_object.addTo(map);
+                            }
+                        }
+                    }
+
+                    if (geo_object_view == 'polygon') {
+                        for (let j = 0; j < data.length ; j++) {
+                            let coords = [];
+                            for (k = 0; k < data[j][geo_object_name].coordinates.length; k++) {
+                                for (m = 0; m < data[j][geo_object_name].coordinates[k].length; m++) {
+                                    coords.push([
+                                        data[j][geo_object_name].coordinates[k][m][1],
+                                        data[j][geo_object_name].coordinates[k][m][0]
+                                    ]);
+                                }
+                            }
+                            <!-- var geo_object = L.polygon([[coords]]).addTo(map).bindPopup(data[j].name); -->
+                            if (geo_object_type === 'dynamic') {
+<!--                                console.log('Dynamic was find  #' + data[j].ident + ' ' + geo_object_name);-->
+                                geo_object.was_find = true;
+                            }
+                            var geo_object = L.polygon([[coords]]);
+                            let is_new = add_object(
+                                all_geo_objects,
+                                geo_object_type,
+                                collection_name,
+                                geo_object_name,
+                                geo_object_view,
+                                data[j].ident,
+                                geo_object
+                            );
+                            if (is_new) {
+                                geo_object.addTo(map).bindPopup(data[j].name)
+                            }
+                        }
+                    }
+                    if (['polygon', 'line_string', 'point'].indexOf(geo_object_view) === -1) {
+                        console.log(geo_object_view+' is unknown geo object view');
+                    }
+                }
+            };
+            check_exists_dynamic(all_geo_objects);
+            xhr.send(null);
+            return 1;
+        }, 1500);
+    }
+
+    map.on('moveend', function(e){
+<!--        if (map._zoom < 5) {-->
+<!--            console.warn("Ignore zoom level " + map._zoom)-->
+<!--            return 1;-->
+<!--        }-->
+        return get_data('all', map.getBounds()._northEast, map.getBounds()._southWest);
+    });
+
+    get_data('static', map.getBounds()._northEast, map.getBounds()._southWest);
+
+    {% if app_contains_dynamic %}
+        let timerId = setInterval(() => get_data(
+            'dynamic',
+            map.getBounds()._northEast,
+            map.getBounds()._southWest
+        ), 5000);
+    {% endif %}
+</script>
+{% endblock %}

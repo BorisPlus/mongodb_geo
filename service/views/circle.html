@@ -1,0 +1,167 @@
+{% extends "./_map.html" %}
+
+{% block map_body %}
+<script>
+	var map = L.map('map').setView([{{ map_lat_center }}, {{ map_lon_center }}], 15);
+    var circle_radius = 500;
+	L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+		maxZoom: 18,
+		attribution: 'ILYA special for <a target="_blank" href="https://otus.ru/">OTUS</a> NoSQL Course',
+		id: 'mapbox/streets-v11',
+		tileSize: 512,
+		zoomOffset: -1
+	}).addTo(map);
+
+    var center = map.getCenter();
+
+    var center_circle = L.circle([center.lat,center.lng], circle_radius, {
+        color: 'red',
+        fillColor: '#f0a',
+        fillOpacity: 0.35
+    }).addTo(map).bindPopup(center.lat + '/' + center.lng);
+
+	var ids_set = new Set();
+
+	var popup = L.popup();
+
+	console.log(map);
+</script>
+
+<script>
+
+    function add_object(add_to, geo_object_type, collection_name, geo_object_name, geo_object_view, ident, obj){
+        if (!(geo_object_type in add_to)) {
+            add_to[geo_object_type] = {};
+        }
+        if (!(collection_name in add_to[geo_object_type])) {
+            add_to[geo_object_type][collection_name] = {};
+        }
+        if (!(geo_object_name in add_to[geo_object_type][collection_name])) {
+            add_to[geo_object_type][collection_name][geo_object_name] = {};
+        }
+        if (!(geo_object_view in add_to[geo_object_type][collection_name][geo_object_name])) {
+            add_to[geo_object_type][collection_name][geo_object_name][geo_object_view] = {};
+        }
+
+        let is_new = true;
+        if (ident in add_to[geo_object_type][collection_name][geo_object_name][geo_object_view]) {
+            is_new = false;
+        }
+        add_to[geo_object_type][collection_name][geo_object_name][geo_object_view][ident] = obj;
+        return is_new;
+    }
+
+    let all_geo_object = {};
+    var xhr;
+    var timer;
+    function get_near_by(lat, lon, distance){
+        if (xhr && !(xhr.readyState === 4)) {
+            xhr.abort();
+            console.log('Previous AJAX #' + xhr.__timestamp_marker + ' was aborted');
+        }
+        clearTimeout(timer);
+        xhr = new XMLHttpRequest();
+        xhr.responseType = 'json';
+        xhr.__timestamp_marker = Date.now();
+        console.log('Start AJAX #' + xhr.__timestamp_marker);
+        timer = setTimeout(function() {
+            console.group('Run AJAX #' + xhr.__timestamp_marker);
+            console.log('lat = ' + lat);
+            console.log('lon = ' + lon);
+            console.log('distance = ' + distance);
+            console.groupEnd();
+
+            xhr.open("GET", '/get_near_by/?lat='+lat+'&lon='+lon+'&distance='+distance, true);
+            xhr.onload = function() {
+                var jsonResponse = xhr.response;
+                if (!(jsonResponse)){
+                    return 0;
+                }
+
+                for (let i = 0; i < jsonResponse.length ; i++) {
+                    let dataset = jsonResponse[i];
+
+                    let geo_object_type = dataset.geo_object_type;
+                    let collection_name = dataset.collection_name;
+                    let geo_object_name = dataset.geo_object_name;
+                    let geo_object_view = dataset.geo_object_view;
+                    let data = dataset.data;
+
+                    console.group('' + collection_name + '.' + geo_object_name + '::' + geo_object_type);
+                    console.log('geo_object_type = ' + geo_object_type);
+                    console.log('geo_object_view = ' + geo_object_view);
+                    console.log('count was found = ' + data.length);
+                    console.groupEnd();
+
+                    if (geo_object_view == 'point') {
+                        for (let j = 0; j < data.length ; j++) {
+                            var geo_object = L.marker([ data[j][geo_object_name].coordinates[1],
+                                                        data[j][geo_object_name].coordinates[0] ]);
+                            let is_new = add_object(
+                                all_geo_object,
+                                geo_object_type,
+                                collection_name,
+                                geo_object_name,
+                                geo_object_view,
+                                data[j].ident,
+                                geo_object
+                            )
+                            if (is_new) {
+                                let popup_title = '';
+                                for( var key in data[j] ) {
+                                    popup_title += "<b>"+key+"</b> " + JSON.stringify(data[j][key]) + "<br />";
+                                }
+                                geo_object.addTo(map).bindPopup(
+                                    popup_title
+                                );
+                            }
+                        }
+                    }
+
+                    if (geo_object_view == 'polygon') {
+                        for (let j = 0; j < data.length ; j++) {
+                            let coords = [];
+                            for (k = 0; k < data[j][geo_object_name].coordinates.length; k++) {
+                                for (m = 0; m < data[j][geo_object_name].coordinates[k].length; m++) {
+                                    coords.push([
+                                        data[j][geo_object_name].coordinates[k][m][1],
+                                        data[j][geo_object_name].coordinates[k][m][0]
+                                    ]);
+                                }
+                            }
+                            var geo_object = L.polygon([[coords]]);
+                            let is_new = add_object(
+                                all_geo_object,
+                                geo_object_type,
+                                collection_name,
+                                geo_object_name,
+                                geo_object_view,
+                                data[j].ident,
+                                geo_object
+                            );
+                            if (is_new) {
+                                geo_object.addTo(map).bindPopup(data[j].name)
+                            }
+                        }
+                    }
+                    if (['polygon', 'point'].indexOf(geo_object_view) === -1) {
+                        console.log(geo_object_view+' is unknown geo object view');
+                    }
+                }
+            };
+            xhr.send(null);
+            return 1;
+        }, 1500);
+    }
+
+    map.on('moveend', function(e){
+        var map_center = map.getCenter();
+        center_circle.setLatLng([map_center.lat, map_center.lng]);
+        center_circle.bindPopup("Lat: " + map_center.lat + "<br/>Lon: " + map_center.lng);
+        return get_near_by(map_center.lat, map_center.lng, circle_radius);
+    });
+
+    var map_center = map.getCenter();
+    get_near_by(map_center.lat, map_center.lng, circle_radius);
+</script>
+{% endblock %}
