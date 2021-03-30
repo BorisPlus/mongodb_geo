@@ -18,6 +18,9 @@ MONGODB_DB_COLLECTIONS = dict(
         "geo_wikimapia_polygons": {
             "area": POLYGON_OBJECT,
         },
+        "meteorites": {
+            "location": POINT_OBJECT,
+        },
     }
 )
 
@@ -51,10 +54,10 @@ def get_response(environ, start_response, app_config, lat, lon, distance):
                     print_debug('\t geo_object_view = ', geo_object_view)
                     print_debug('\t collection_name = ', collection_name)
                     print_debug('\t geo_object_name = ', geo_object_name)
-                    geo_object_type=MONGODB_DB_COLLECTIONS. \
-                            get(geo_object_view). \
-                            get(collection_name). \
-                            get(geo_object_name, DEFAULT_OBJECT_VIEW)
+                    geo_object_type = MONGODB_DB_COLLECTIONS. \
+                        get(geo_object_view). \
+                        get(collection_name). \
+                        get(geo_object_name, DEFAULT_OBJECT_VIEW)
                     print_debug('\t geo_object_view = ', geo_object_view)
                     # TODO: было бы клево, но надо инверсить (X,Y) --> (Y,X) для Leaflet
                     data = dict(
