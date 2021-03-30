@@ -17,14 +17,12 @@
     var center_circle = L.circle([center.lat,center.lng], circle_radius, {
         color: 'red',
         fillColor: '#f0a',
-        fillOpacity: 0.35
+        fillOpacity: 0.35,
+        dashArray: '15'
     }).addTo(map).bindPopup(center.lat + '/' + center.lng);
-
 	var ids_set = new Set();
 
 	var popup = L.popup();
-
-	console.log(map);
 </script>
 
 <script>
@@ -71,7 +69,7 @@
             console.log('distance = ' + distance);
             console.groupEnd();
 
-            xhr.open("GET", '/get_near_by/?lat='+lat+'&lon='+lon+'&distance='+distance, true);
+            xhr.open("GET", '/get_near_by/?lat='+lat+'&lon='+lon+'&distance='+distance+'/', true);
             xhr.onload = function() {
                 var jsonResponse = xhr.response;
                 if (!(jsonResponse)){
@@ -88,21 +86,22 @@
                     let data = dataset.data;
 
                     console.group('' + collection_name + '.' + geo_object_name + '::' + geo_object_type);
+                    console.log('geo_object_name = ' + geo_object_name);
                     console.log('geo_object_type = ' + geo_object_type);
                     console.log('geo_object_view = ' + geo_object_view);
                     console.log('count was found = ' + data.length);
                     console.groupEnd();
 
-                    if (geo_object_view == 'point') {
+                    if (geo_object_type == 'point') {
                         for (let j = 0; j < data.length ; j++) {
                             var geo_object = L.marker([ data[j][geo_object_name].coordinates[1],
                                                         data[j][geo_object_name].coordinates[0] ]);
                             let is_new = add_object(
                                 all_geo_object,
-                                geo_object_type,
+                                geo_object_view,
                                 collection_name,
                                 geo_object_name,
-                                geo_object_view,
+                                geo_object_type,
                                 data[j].ident,
                                 geo_object
                             )
@@ -118,7 +117,7 @@
                         }
                     }
 
-                    if (geo_object_view == 'polygon') {
+                    if (geo_object_type == 'polygon') {
                         for (let j = 0; j < data.length ; j++) {
                             let coords = [];
                             for (k = 0; k < data[j][geo_object_name].coordinates.length; k++) {
@@ -132,20 +131,21 @@
                             var geo_object = L.polygon([[coords]]);
                             let is_new = add_object(
                                 all_geo_object,
-                                geo_object_type,
+                                geo_object_view,
                                 collection_name,
                                 geo_object_name,
-                                geo_object_view,
+                                geo_object_type,
                                 data[j].ident,
                                 geo_object
                             );
                             if (is_new) {
+                                console.log('is_new = ' + data[j].name);
                                 geo_object.addTo(map).bindPopup(data[j].name)
                             }
                         }
                     }
-                    if (['polygon', 'point'].indexOf(geo_object_view) === -1) {
-                        console.log(geo_object_view+' is unknown geo object view');
+                    if (['polygon', 'point'].indexOf(geo_object_type) === -1) {
+                        console.log(geo_object_type + ' is unknown geo object type');
                     }
                 }
             };
@@ -156,9 +156,12 @@
 
     map.on('moveend', function(e){
         var map_center = map.getCenter();
+        get_near_by(map_center.lat, map_center.lng, circle_radius);
+    });
+    map.on('move', function(e){
+        var map_center = map.getCenter();
         center_circle.setLatLng([map_center.lat, map_center.lng]);
         center_circle.bindPopup("Lat: " + map_center.lat + "<br/>Lon: " + map_center.lng);
-        return get_near_by(map_center.lat, map_center.lng, circle_radius);
     });
 
     var map_center = map.getCenter();

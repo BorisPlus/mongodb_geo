@@ -18,9 +18,6 @@ MONGODB_DB_COLLECTIONS = dict(
         "geo_wikimapia_polygons": {
             "area": POLYGON_OBJECT,
         },
-        "meteorites": {
-            "location": POINT_OBJECT,
-        },
     }
 )
 
@@ -42,30 +39,29 @@ def get_response(environ, start_response, app_config, lat, lon, distance):
     :param distance:
     :return:
     """
+    print_debug('\t', float(lat), float(lon), float(distance))
     start_response('200 OK', [('Content-Type', 'text/plain; charset=utf-8')])  # application/json
     dataset = []
     with pymongo.MongoClient(MONGODB_CONNECTION_STRING) as client:
-        for geo_object_type in MONGODB_DB_COLLECTIONS:
-            for collection_name in MONGODB_DB_COLLECTIONS.get(geo_object_type):
+        for geo_object_view in MONGODB_DB_COLLECTIONS:
+            for collection_name in MONGODB_DB_COLLECTIONS.get(geo_object_view):
                 collection = client[MONGODB_DB_NAME][collection_name]
-                for geo_object_name in MONGODB_DB_COLLECTIONS.get(geo_object_type).get(collection_name):
+                for geo_object_name in MONGODB_DB_COLLECTIONS.get(geo_object_view).get(collection_name):
 
-                    print_debug('\t', geo_object_type)
-                    print_debug('\t', collection_name)
-                    print_debug('\t', geo_object_name)
-                    print_debug('\t', MONGODB_DB_COLLECTIONS.
-                                get(geo_object_type).
-                                get(collection_name).
-                                get(geo_object_name, DEFAULT_OBJECT_VIEW))
+                    print_debug('\t geo_object_view = ', geo_object_view)
+                    print_debug('\t collection_name = ', collection_name)
+                    print_debug('\t geo_object_name = ', geo_object_name)
+                    geo_object_type=MONGODB_DB_COLLECTIONS. \
+                            get(geo_object_view). \
+                            get(collection_name). \
+                            get(geo_object_name, DEFAULT_OBJECT_VIEW)
+                    print_debug('\t geo_object_view = ', geo_object_view)
                     # TODO: было бы клево, но надо инверсить (X,Y) --> (Y,X) для Leaflet
                     data = dict(
                         collection_name=collection_name,
                         geo_object_name=geo_object_name,
+                        geo_object_view=geo_object_view,
                         geo_object_type=geo_object_type,
-                        geo_object_view=MONGODB_DB_COLLECTIONS.
-                            get(geo_object_type).
-                            get(collection_name).
-                            get(geo_object_name, DEFAULT_OBJECT_VIEW),
                         data=list(collection.find({
                             # TODO:  planner returned error :: caused by ::
                             #  unable to find index for $geoNear query, full error:
