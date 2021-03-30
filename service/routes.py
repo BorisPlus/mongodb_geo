@@ -7,7 +7,7 @@ routes_of_uri_regexps = \
         controller='index.py'
     ), \
     dict(
-        uri_regexp='^(/get_data/\?(geo_object_type=[a-z]*)&(north_east_lat=\-?\d*\.*\d*)&(north_east_lon=\-?\d*\.*\d*)&(south_west_lat=\-?\d*\.*\d*)&(south_west_lon=\-?\d*\.*\d*)/)$',
+        uri_regexp='^(/get_data/\?(geo_object_view=[a-z]*)&(north_east_lat=\-?\d*\.*\d*)&(north_east_lon=\-?\d*\.*\d*)&(south_west_lat=\-?\d*\.*\d*)&(south_west_lon=\-?\d*\.*\d*)/)$',
         controller='get_data.py'
     ), \
     dict(  #

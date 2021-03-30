@@ -8,7 +8,7 @@ from base_config import (
     MONGODB_DB_NAME,
     POINT_OBJECT,
     POLYGON_OBJECT,
-    DEFAULT_OBJECT_VIEW
+    DEFAULT_OBJECT_TYPE
 )
 
 PRINT_DEBUG = 0
@@ -57,7 +57,7 @@ def get_response(environ, start_response, app_config, lat, lon, distance):
                     geo_object_type = MONGODB_DB_COLLECTIONS. \
                         get(geo_object_view). \
                         get(collection_name). \
-                        get(geo_object_name, DEFAULT_OBJECT_VIEW)
+                        get(geo_object_name, DEFAULT_OBJECT_TYPE)
                     print_debug('\t geo_object_view = ', geo_object_view)
                     # TODO: было бы клево, но надо инверсить (X,Y) --> (Y,X) для Leaflet
                     data = dict(
