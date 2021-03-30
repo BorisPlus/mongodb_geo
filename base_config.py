@@ -19,15 +19,15 @@ MONGODB_DB_COLLECTIONS = dict(
             "location": POINT_OBJECT,
         },
     },
-    # dynamic={
-    #     "geo_yandex_taxi": {
-    #         "last_point": POINT_OBJECT,
-    #         "path": LINE_STRING_OBJECT,
-    #     },
-    #     # "geo_city_mobil": {
-    #     #     "location": POINT_OBJECT,
-    #     # },
-    # },
+    dynamic={
+        "geo_yandex_taxi": {
+            "last_point": POINT_OBJECT,
+            "path": LINE_STRING_OBJECT,
+        },
+        # "geo_city_mobil": {
+        #     "location": POINT_OBJECT,
+        # },
+    },
 )
 CONTAINS_DYNAMIC_DATA = True if len(MONGODB_DB_COLLECTIONS.get(DYNAMIC, '')) else False
 # Сыктывкар Аэропорт
