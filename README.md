@@ -390,7 +390,7 @@ Valid latitude values are between -90 and 90, both inclusive.
 
 ## Вместо заключения
 
-И лучше один раз увидеть, чем сто раз услышать.
+Лучше один раз увидеть, чем сто раз услышать.
 
 ![8](./README.files/8.png)
 
