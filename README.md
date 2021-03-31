@@ -349,13 +349,13 @@ MONGODB_DB_COLLECTIONS = dict(
 
 Работа по старту AJAX-запроса и его прерыванию, если браузер осуществил новое обращение, продемонстрирована ниже. 
 
-![CLEVER_AJAX](./README.files/7_CLEVER_AJAX.gif). 
+![CLEVER_AJAX](./README.files/7_CLEVER_AJAX.gif)
 
 ## Направления работы
 
 ### Соответствие координат
 
-MongoDB использует систему координат WGS84 ([`MongoDB geospatial queries on GeoJSON objects calculate on a sphere; MongoDB uses the WGS84 reference system for geospatial queries on GeoJSON objects`](https://docs.mongodb.com/manual/geospatial-queries/#geojson-objects)), [из глоссария](https://docs.mongodb.com/manual/reference/glossary/#term-wgs84)).
+MongoDB использует систему координат WGS84 ([`MongoDB geospatial queries on GeoJSON objects calculate on a sphere; MongoDB uses the WGS84 reference system for geospatial queries on GeoJSON objects`](https://docs.mongodb.com/manual/geospatial-queries/#geojson-objects)) (поиск в [глоссарии](https://docs.mongodb.com/manual/reference/glossary/) слова "wgs84").
 
 При этом Leaflet по-умолчанию использует систему координат [EPSG 3857]([https://leafletjs.com/reference-1.7.1.html#crs-l-crs-epsg3857]).
 
