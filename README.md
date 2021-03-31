@@ -390,11 +390,12 @@ Valid latitude values are between -90 and 90, both inclusive.
 
 ## Вместо заключения
 
-Спасибо курсам <a target="_blank" href="https://otus.ru/">"OTUS"</a> за приобретенный опыт Fullstack-разработки (в частности интеграции Python, Javascript и MongoDB).
-
-<p style='text-align: right;'> «Лучше один раз увидеть, чем сто раз услышать!» (<i>пословица</i>)</p>
+И лучше один раз увидеть, чем сто раз услышать.
 
 ![8](./README.files/8.png)
 
 ![9](./README.files/9.png) 
+
+Спасибо курсам <a target="_blank" href="https://otus.ru/">"OTUS"</a> за приобретенный опыт Fullstack-разработки (в частности интеграции Python, Javascript и MongoDB).
+
 
