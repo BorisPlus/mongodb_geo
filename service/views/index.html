@@ -45,12 +45,15 @@
 <script>
     function check_exists_dynamic(arr) {
         for (collection_name in arr['dynamic']) {
+            console.log('check_exists_dynamic collection_name = ' + collection_name);
             for (geo_object_name in arr['dynamic'][collection_name]) {
+                console.log('check_exists_dynamic geo_object_name = ' + geo_object_name);
                 for (geo_object_type in arr['dynamic'][collection_name][geo_object_name]) {
                     for (ident in arr['dynamic'][collection_name][geo_object_name][geo_object_type]) {
+                        console.log('check_exists_dynamic ident = ' + ident);
                         let o = arr['dynamic'][collection_name][geo_object_name][geo_object_type][ident];
-
-                        if (o.was_found == false) {
+                        console.log('o.was_found = ' + o.was_found);
+                        if (o.was_found === false) {
                             console.log('Dynamic object #' + ident + ' left current map area');
                             o.removeFrom(map);
                             arr['dynamic'][collection_name][geo_object_name][geo_object_type][ident].removeFrom(map);
@@ -85,7 +88,7 @@
             is_new = false;
         }
         if (geo_object_view === 'dynamic' && is_new == false) {
-            add_to[geo_object_view][collection_name][geo_object_name][geo_object_type][ident].was_found = true
+            add_to[geo_object_view][collection_name][geo_object_name][geo_object_type][ident].was_found = true;
             if (geo_object_type === 'point') {
                 p = add_to[geo_object_view][collection_name][geo_object_name][geo_object_type][ident];
                 p.setLatLng([obj.getLatLng().lat, obj.getLatLng().lng]);
@@ -157,7 +160,6 @@
                             var geo_object = L.marker([ data[j][geo_object_name].coordinates[1],
                                                         data[j][geo_object_name].coordinates[0] ]);
                             if (geo_object_view === 'dynamic') {
-<!--                                console.log('Dynamic was find  #' + data[j].ident + ' ' + geo_object_name);-->
                                 geo_object.was_find = true;
                             }
                             let is_new = add_object(
@@ -185,14 +187,13 @@
                         for (let j = 0; j < data.length ; j++) {
                             let coords = [];
                             for (k = 0; k < data[j][geo_object_name].coordinates.length; k++) {
-                                coords.push([
-                                    data[j][geo_object_name].coordinates[k][1],
-                                    data[j][geo_object_name].coordinates[k][0]
-                                ]);
+                                coords.push({
+                                    lat: data[j][geo_object_name].coordinates[k][1],
+                                    lon: data[j][geo_object_name].coordinates[k][0]
+                                });
                             }
                             var geo_object = L.polyline(coords, {color: 'red'});
                             if (geo_object_view === 'dynamic') {
-<!--                                console.log('Dynamic was find  #' + data[j].ident + ' ' + geo_object_name);-->
                                 geo_object.was_find = true;
                             }
                             let is_new = add_object(
@@ -215,10 +216,10 @@
                             let coords = [];
                             for (k = 0; k < data[j][geo_object_name].coordinates.length; k++) {
                                 for (m = 0; m < data[j][geo_object_name].coordinates[k].length; m++) {
-                                    coords.push([
-                                        data[j][geo_object_name].coordinates[k][m][1],
-                                        data[j][geo_object_name].coordinates[k][m][0]
-                                    ]);
+                                    coords.push({
+                                        lat: data[j][geo_object_name].coordinates[k][m][1],
+                                        lon: data[j][geo_object_name].coordinates[k][m][0]
+                                    });
                                 }
                             }
                             <!-- var geo_object = L.polygon([[coords]]).addTo(map).bindPopup(data[j].name); -->
@@ -244,12 +245,12 @@
                     if (['polygon', 'line_string', 'point'].indexOf(geo_object_type) === -1) {
                         console.log(geo_object_type+' is unknown geo object type');
                     }
-                }
+                };
             };
-            check_exists_dynamic(all_geo_objects);
             xhr.send(null);
             return 1;
         }, 1500);
+        check_exists_dynamic(all_geo_objects);
     }
 
     map.on('moveend', function(e){

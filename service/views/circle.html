@@ -122,10 +122,10 @@
                             let coords = [];
                             for (k = 0; k < data[j][geo_object_name].coordinates.length; k++) {
                                 for (m = 0; m < data[j][geo_object_name].coordinates[k].length; m++) {
-                                    coords.push([
-                                        data[j][geo_object_name].coordinates[k][m][1],
-                                        data[j][geo_object_name].coordinates[k][m][0]
-                                    ]);
+                                    coords.push({
+                                        lat: data[j][geo_object_name].coordinates[k][m][1],
+                                        lon: data[j][geo_object_name].coordinates[k][m][0]
+                                    });
                                 }
                             }
                             var geo_object = L.polygon([[coords]]);

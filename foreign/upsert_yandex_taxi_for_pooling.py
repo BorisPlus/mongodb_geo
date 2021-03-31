@@ -12,8 +12,8 @@ from upsert_yandex_taxi import (
     MONGODB_DB_COLLECTION_PK
 )
 import pymongo
-# from pymongo import UpdateOne
-# from pymongo.errors import BulkWriteError
+from pymongo import UpdateOne
+from pymongo.errors import BulkWriteError
 import settings
 from multiprocessing import Pool
 from any import (
@@ -37,31 +37,31 @@ def for_pooling(lon_lat):
 
     with pymongo.MongoClient(MONGODB_CONNECTION_STRING) as client:
         collection = client[MONGODB_DB_NAME][MONGODB_DB_COLLECTION_NAME]
-        # instructions = [
-        #     UpdateOne(
-        #         {
-        #             IDENT_KEY: doc[MONGODB_DB_COLLECTION_PK],
-        #             'timestamp': {'$lte': timestamp}
-        #         },
-        #         {
-        #             '$set': pointing_with_pathing(doc)
-        #         },
-        #         upsert=True
-        #     )
-        #     for doc in documents
-        # ]
-        # if instructions:
-        #     try:
-        #         collection.bulk_write(instructions)
-        #     except BulkWriteError:
-        #         raise
-        for doc in documents:
+        instructions = [
+            UpdateOne(
+                {
+                    IDENT_KEY: doc[MONGODB_DB_COLLECTION_PK],
+                    'timestamp': {'$lte': timestamp}
+                },
+                {
+                    '$set': pointing_with_pathing(doc)
+                },
+                upsert=True
+            )
+            for doc in documents
+        ]
+        if instructions:
             try:
-                collection.update_one({IDENT_KEY: doc.get(MONGODB_DB_COLLECTION_PK),
-                                       'timestamp': {'$lte': timestamp}}, {'$set': pointing_with_pathing(doc)},
-                                      upsert=True)
-            except:
+                collection.bulk_write(instructions)
+            except BulkWriteError:
                 ...
+        # for doc in documents:
+        #     try:
+        #         collection.update_one({IDENT_KEY: doc.get(MONGODB_DB_COLLECTION_PK),
+        #                                'timestamp': {'$lte': timestamp}}, {'$set': pointing_with_pathing(doc)},
+        #                               upsert=True)
+        #     except:
+        #         ...
 
 
 def pooler(processes, points):
