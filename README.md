@@ -228,7 +228,7 @@ uwsgi --http 127.0.0.1:8080 --wsgi-file ./service/application.py
     { "name" : "Österplana 064" }
 ```
 
-Данные "необычные" сведения соответствуют метеориту "Österplana", имеющему удивительную [историю](https://en.wikipedia.org/wiki/Österplana_065). 
+Данные "необычные" сведения соответствуют метеориту "Österplana", имеющему удивительную [историю](https://en.wikipedia.org/wiki/Österplana_065) ([рус.](https://ru.qaz.wiki/wiki/Österplana_065)). 
 
 Для интерактивной демонстрации динамичных гео-объектов необходима следующая коллекция:
 
