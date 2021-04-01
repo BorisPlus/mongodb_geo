@@ -171,7 +171,7 @@ python3 ./foreign/onetime_static_load_polygons_wikimapia.py
 
 Изначально сведения о маршруте не имеют необходимой MongoDB структуры для гео-объекта типа "линия". Поэтому в качестве данного атрибута выступает дополнительное поле `path`, куда перенесены сведения в необходимом формате. Структура гео-типа `линия` имеет вид: 
 ```
-path: { type: 'LineString' , coordinates: [[ [LON_1, LAT_1], [LON_2, LAT_2], ..., [LON_N, LAT_N] ]] }
+path: { type: 'LineString' , coordinates: [ [LON_1, LAT_1], [LON_2, LAT_2], ..., [LON_N, LAT_N] ] }
 ```
 
 ## Операции с гео-объектами
